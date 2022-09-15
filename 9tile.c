@@ -9,14 +9,12 @@ uint64_t mcStepSeed(const uint64_t s, const uint64_t salt)
     return s * (s * 6364136223846793005ULL + 1442695040888963407ULL) + salt;
 }
 
-//see if you can revert this "optimization" because i hate doing mod 13
 int mcFirstIsZero(const uint64_t s)
 {
     //mod = 16;
     return (int)(((long)s >> 24) % 13) == 0;
 }
 
-//NOT POSSIBLE TO OPTIMIZE BECAUSE QUADRATIC NOT LCG
 uint64_t getChunkSeed(uint64_t ss, int x, int z)
 {
     ss += x;
@@ -26,8 +24,6 @@ uint64_t getChunkSeed(uint64_t ss, int x, int z)
     return ss;
 }
 
-//compose a better function for this which is much faster
-//NOT POSSIBLE BECAUSE ITS A QUADRATIC NOT A LCG
 uint64_t getStartSalt(uint64_t ws)
 {
     ws = mcStepSeed(ws, 7590731853067264053ULL);
@@ -46,20 +42,19 @@ int mapSpecial(uint64_t ws)
     const uint64_t st = getStartSalt(ws);
     const uint64_t ss = getStartSeed(ws);
 
-    int count = 0;
     int i, j;
 
     for (j = 0; j < 3; j++)
     {
         for (i = 0; i < 3; i++)
         {
-            if (mcFirstIsZero(getChunkSeed(ss, i-1, j-1)))
+            if (!mcFirstIsZero(getChunkSeed(ss, i-1, j-1)))
             {
-                count++;
+                return 0;
             }
         }
     }
-    return count;
+    return 1;
 }
 
 void * mapSpecialRange(uint64_t offset)
@@ -68,12 +63,11 @@ void * mapSpecialRange(uint64_t offset)
     uint64_t max = offset + (1LL << 32) - 1;
     for(uint64_t seed = min; seed <= max; seed++)
     {
-        if(mapSpecial(seed) == 9)
+        if(mapSpecial(seed))
         {
             printf("%lld\n", seed);
         }
     }
-    //return NULL;
 }
 
 void spawnThreads(uint64_t offoffset)
@@ -93,14 +87,10 @@ void spawnThreads(uint64_t offoffset)
     for(i = 0; i < THREADS; i++)
     {
         pthread_join(thread_id[i], NULL);
-        //printf("join'd thread #%d\n", i);
     }
 }
 
 
-
-
-//use pthreading and do research on what nvidia gpus can do
 int main()
 {
     printf("this configuration will do %lld seeds per block\n\n", THREADS * (1ULL << 32));
@@ -118,7 +108,5 @@ int main()
         //printf("Started block #%d with offset %ld\n", i, chunkstart);
         spawnThreads(chunkstart);
     }
-
-    //printf("full end\n");
     return 0;
 }
