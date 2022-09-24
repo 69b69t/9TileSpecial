@@ -8,7 +8,7 @@ uint64_t mcStepSeed(const uint64_t s, const uint64_t salt)
 
 int mcFirstIsZero(const uint64_t s)
 {
-    return (int)(((uint64_t)s >> 24) % 13) == 0;
+    return (int)(((int64_t)s >> 24) % 13) == 0;
 }
 
 uint64_t getChunkSeed(uint64_t ss, int x, int z)
@@ -61,14 +61,14 @@ int main(int argc, char **argv)
     //file stuff
     FILE* fp;
     fp = fopen(argv[2], "r");
-    fscanf(fp, "%ld %ld", &startSeed, &endSeed);
+    fscanf(fp, "%lld %lld", &startSeed, &endSeed);
     fclose(fp);
 
     for(int64_t seed = startSeed; seed <= endSeed; seed++)
     {
         if(mapSpecial(seed))
         {
-            printf("%ld\n", seed);
+            printf("%lld\n", seed);
         }
     }
     return 0;
